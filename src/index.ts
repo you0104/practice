@@ -1,6 +1,5 @@
-const width1 = 5;
-const width2 = 8;
-const height: number = 3;
-const area = ((width1 + width2) * height) / 2;
+const binary = 0b1010; //2進数リテラル
+const octal = 0o755; //8進数リテラル
+const hexadecimal = 0xff; //16進数リテラル
 
-console.log(area);
+console.log(binary, octal, hexadecimal);
