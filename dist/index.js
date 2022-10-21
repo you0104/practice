@@ -1,3 +1,4 @@
 "use strict";
-const message = "Hello World!";
-console.log(message);
+const greeting = "Hello,";
+const target = "world!";
+console.log(greeting + target);
