@@ -1,4 +1,4 @@
 "use strict";
-const message = `Hello
-world!`;
-console.log(message);
+const str1 = "Hello";
+const str2 = "world!";
+console.log(`${str1},${str2}`);
