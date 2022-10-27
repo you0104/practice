@@ -1,2 +1,4 @@
 "use strict";
-console.log("Hello \n\\world!/");
+const no = false;
+const yes = true;
+console.log(yes, no);
