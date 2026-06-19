@@ -1,2 +1,5 @@
 node_modules
 ProTypeScript_SampleCode
+
+# 配布用zip（コミット済みソースのパッケージのため除外）
+harumi_coffee2026.zip
