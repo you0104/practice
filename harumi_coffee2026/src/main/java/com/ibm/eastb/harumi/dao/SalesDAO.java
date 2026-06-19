@@ -81,6 +81,75 @@ public class SalesDAO {
 	}
 
 	/**
+	 * 注文情報を登録する（提供資料のSQLに準拠した別実装）。<br>
+	 * {@link #insertSale(Order)} と同じく Sales と SalesDetail に登録するが、
+	 * 自動採番された注文番号(salesNo)の取得方法が異なる。<br>
+	 * この実装では JDBC の getGeneratedKeys を使わず、<br>
+	 * <pre>
+	 *   INSERT INTO SalesDetail (...)
+	 *   SELECT MAX(salesNo), ?, ?, ?, ? FROM sales
+	 * </pre>
+	 * のように、SalesへINSERTした直後の「最大の注文番号(=最新の注文)」を
+	 * SELECTし直して明細に結び付ける。<br>
+	 * <br>
+	 * 注意：MAX(salesNo)で最新番号を取得するため、同一コネクション・同一
+	 * トランザクション内で実行しないと、他の注文の番号を拾う恐れがある。
+	 * ここでは1つのトランザクション(setAutoCommit(false))にまとめ、
+	 * 直前にINSERTしたSales行を確実に参照できるようにしている。<br>
+	 * 同時実行の安全性は {@link #insertSale(Order)}（getGeneratedKeys方式）の方が高い。
+	 *
+	 * @param order 登録する注文情報
+	 * @throws SQLException DBアクセスに失敗した場合
+	 */
+	public void insertSaleByMaxNo(Order order) throws SQLException {
+		// 注文(ヘッダ)をまず登録する
+		String insertSales = "INSERT INTO sales (empno, subTotal, tax, total, payment) VALUES (?, ?, ?, ?, ?)";
+		// 直前に登録した注文の番号(MAX)を取り直して、明細に結び付ける
+		String insertDetail = "INSERT INTO salesDetail (salesNo, itemNo, price, quantity, coffeeAmount) "
+				+ "SELECT MAX(salesNo), ?, ?, ?, ? FROM sales";
+
+		Connection con = null;
+		try {
+			con = ConnectionManager.getConnection();
+			con.setAutoCommit(false);
+
+			// (1) 注文テーブルにまず追加する
+			try (PreparedStatement ps = con.prepareStatement(insertSales)) {
+				ps.setString(1, order.getEmpno());
+				ps.setInt(2, order.getSubtotal());
+				ps.setInt(3, order.getTax());
+				ps.setInt(4, order.getTotal());
+				ps.setInt(5, order.getPayment());
+				ps.executeUpdate();
+			}
+
+			// (2) 各商品の明細を追加する。salesNoはSELECT MAX(salesNo)で取得する
+			//     （個数が0の商品は登録しない）
+			try (PreparedStatement ps = con.prepareStatement(insertDetail)) {
+				for (OrderDetail d : order.getOrderedDetails()) {
+					ps.setInt(1, d.getItemNo());
+					ps.setInt(2, d.getPrice());
+					ps.setInt(3, d.getQuantity());
+					ps.setInt(4, d.getCoffeeAmount());
+					ps.executeUpdate();
+				}
+			}
+
+			con.commit();
+		} catch (SQLException e) {
+			if (con != null) {
+				con.rollback();
+			}
+			throw e;
+		} finally {
+			if (con != null) {
+				con.setAutoCommit(true);
+				con.close();
+			}
+		}
+	}
+
+	/**
 	 * 当日の総売上（税込合計の合計）を取得する。
 	 *
 	 * @return 当日の総売上。売上がない場合は0
