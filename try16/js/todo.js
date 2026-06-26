@@ -7,17 +7,17 @@ const errMsg = document.querySelector("#err_msg");
 const todoList = document.querySelector("#todo_list");
 
 // ［追加］ボタンのクリックイベントに対応する
-addBtn.addEventListener("click", addTodo);
+addBtn.addEventListener("click", insertBtnClicked);
 
 // 入力欄で Enter キーでも追加できるようにする
 input.addEventListener("keydown", (event) => {
 	if (event.key === "Enter") {
-		addTodo();
+		insertBtnClicked();
 	}
 });
 
 // タスクを追加する
-function addTodo() {
+function insertBtnClicked() {
 	const text = input.value.trim();
 
 	// タスク内容が空の場合はエラーにする
@@ -37,10 +37,8 @@ function addTodo() {
 	const completeBtn = document.createElement("button");
 	completeBtn.textContent = "完了";
 
-	// 完了ボタンのクリックで li のクラスを付け外しする
-	completeBtn.addEventListener("click", () => {
-		li.classList.toggle("complete");
-	});
+	// 完了ボタンのクリックイベントに対応する
+	completeBtn.addEventListener("click", completeBtnClicked);
 
 	// li 要素にボタン要素を追加する
 	li.appendChild(completeBtn);
@@ -51,4 +49,11 @@ function addTodo() {
 	// 入力欄を空にして次の入力に備える
 	input.value = "";
 	input.focus();
+}
+
+// タスクを完了する
+function completeBtnClicked(event) {
+	// クリックされたボタンの親要素（li）のクラスを付け外しする
+	const li = event.target.parentNode;
+	li.classList.toggle("complete");
 }
